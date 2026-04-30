@@ -9,21 +9,15 @@ function activate(context) {
 	const provider = {
 		resolveWebviewView: (w) => {
 			w.webview.options = { enableScripts: true };
+			const htmlpath = vscode.Uri.joinPath(context.extensionUri, "media", "sidebar.html");
+			w.webview.html = require("fs").readFileSync(htmlpath.fsPath, "utf-8")
 			
-			w.webview.html = `
-				<!DOCTYPE html>
-				<html lang="en">
-				<body>
-					<h3>hi</h3>
-					<button id="click">click</button>
-					<script>
-						const vscode = acquireVsCodeApi();
-						document.getElementById("click").addEventListener("click", () => {
-							vscode.postMessage({ command: "hello" })	
-						})
-				</body>
-				</html>
-			`;
+			w.webview.onDidReceiveMessage((msg) => {
+				if (msg.command === "hello") {
+					console.log("hello :3");
+					w.webview.postMessage({ command: "response", data: "hi :3 owo" })
+				}
+			})
 		}
 	};
 
@@ -33,8 +27,6 @@ function activate(context) {
 }
 
 exports.activate = activate;
-
-// This method is called when your extension is deactivated
 function deactivate() {}
 
 module.exports = {
