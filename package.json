@@ -2,9 +2,13 @@
   "name": "qvstime",
   "displayName": "qVStime",
   "description": "A super simple VSC/odium plugin to show some more detailed Hackatime stats for a user as a sidebar!",
-  "version": "0.0.1",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/qwikster/qvstime"
+  },
   "engines": {
-    "vscode": "^1.118.0"
+    "vscode": "^1.8.0"
   },
   "categories": [
     "Other"
@@ -12,10 +16,27 @@
   "activationEvents": [],
   "main": "./extension.js",
   "contributes": {
-    "commands": [{
-      "command": "qvstime.helloWorld",
-      "title": "Hello World"
-    }]
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "qvstime",
+          "title": "qVStime",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "qvstime": [
+        {
+          "type": "webview",
+          "id": "qvstime.sidebarView",
+          "name": "qVStime"
+        }
+      ]
+    },
+    "activationEvents": [
+      "onView:qvstime.sidebarView"
+    ]
   },
   "scripts": {
     "lint": "eslint .",
@@ -23,7 +44,7 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.118.0",
+    "@types/vscode": "^1.8.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
     "eslint": "^9.39.3",
