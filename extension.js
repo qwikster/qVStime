@@ -24,13 +24,26 @@ function readConfig() {
 	const apiUrl = (settings.api_url || 'https://hackatime.hackclub.com/api/hackatime/v1').replace(/\/$/, '')
 	const apiKey = settings.api_key || ""
 	const origin = new URL(apiUrl).origin
-	console.log({ apiUrl, apiKey, origin })
 	return { apiUrl, apiKey, origin }
 }
 
 function get(url, apiKey) {
 	return new Promise((resolve, reject) => {
 		const parsed = new URL(url)
+		const auth = Buffer.from(apiKey + ":").toString("base64")
+		https.request({
+			hostname: parsed.hostname,
+			path: parsed.pathname + parsed.search,
+			method: "GET",
+			headers: {"Authorization": "Basic " + auth, "Accept": "application/json" },
+		}, (res) => {
+			let body = ""
+			res.on("data", c => body += c)
+			res.on("end", () => {
+				try { resolve(JSON.parse(body)) }
+				catch { resolve(body) }
+			})
+		}).on("error", reject).end()
 	});
 }
 
@@ -43,7 +56,22 @@ function formatSeconds(s) {
 	return h > 0 ? `${h}h ${m}m` : `${m}m`
 }
 
-async function fetchData(apiUrl, apiKey, origin) {}
+async function fetchData(apiUrl, apiKey, origin) {
+	const today = todayStr()
+	const [stats, todayHours] = await Promise.all([
+		get(`${apiUrl}/users/current/stats/last_7_days`, apiKey),
+		get(`${origin}/api/v1/authenticated/hours?start_date=${today}&end_date=${today}`, apiKey),
+	])
+
+	const d = stats.data || {}
+	return {
+		today:        formatSeconds(todayHours.total_seconds),
+		total:        d.human_readable_total || formatSeconds(d.total_seconds),
+		dailyAverage: d.human_readable_daily_average || formatSeconds(d.daily_average),
+		projects:     (d.projects || []).slice(0, 5).map(p => ({ name: p.name, time: p.text || formatSeconds(p.total_seconds), pct: p.percent })),
+		languages:    (d.laguages || []).slice(0, 5).map(l => ({ name: l.name, time: l.text || formatSeconds(l.total_seconds), pct: l.percent })),
+	}
+}
 
 function activate(context) {
 	console.log('qVStime is active!!');
@@ -64,13 +92,12 @@ function activate(context) {
 			w.webview.html = fs.readFileSync(htmlpath.fsPath, "utf-8")
 			
 			const refresh = async () => {
-				async () => {
-					try {
-						const data = await fetchData(config.apiUrl, config.apiKey, config.origin)
-						w.webview.postMessage({ command: "data", data })
-					} catch (e) {
-						w.webview.postMessage({ command: "error", message: e.message })
-					}
+				try {
+					const data = await fetchData(config.apiUrl, config.apiKey, config.origin)
+					w.webview.postMessage({ command: "data", data })
+					console.log(data)
+				} catch (e) {
+					w.webview.postMessage({ command: "error", message: e.message })
 				}
 			}
 
