@@ -30,16 +30,16 @@ function readConfig() {
 function get(url, apiKey) {
 	return new Promise((resolve, reject) => {
 		const parsed = new URL(url)
-		const auth = Buffer.from(apiKey + ":").toString("base64")
 		https.request({
 			hostname: parsed.hostname,
 			path: parsed.pathname + parsed.search,
 			method: "GET",
-			headers: {"Authorization": "Basic " + auth, "Accept": "application/json" },
+			headers: {"Authorization": "Bearer " + apiKey, "Accept": "application/json" },
 		}, (res) => {
 			let body = ""
 			res.on("data", c => body += c)
 			res.on("end", () => {
+				console.log(res.statusCode, url, body);
 				try { resolve(JSON.parse(body)) }
 				catch { resolve(body) }
 			})
@@ -47,7 +47,7 @@ function get(url, apiKey) {
 	});
 }
 
-function todayStr() { return new Date().toISOString().split("T")[0] }
+function todayStr() { return new Date().toLocaleDateString("en-CA")}
 
 function formatSeconds(s) {
 	if (!s) return "0m"
@@ -57,10 +57,10 @@ function formatSeconds(s) {
 }
 
 async function fetchData(apiUrl, apiKey, origin) {
-	const today = todayStr()
-	const [stats, todayHours] = await Promise.all([
-		get(`${apiUrl}/users/current/stats/last_7_days`, apiKey),
-		get(`${origin}/api/v1/authenticated/hours?start_date=${today}&end_date=${today}`, apiKey),
+	const [language, projects, today] = await Promise.all([
+		get(`${origin}/api/v1/users/my/stats`, apiKey), // Languages
+		get(`${origin}/api/v1/users/my/stats?features=projects`, apiKey), // Projects
+		get(`${origin}/api/v1/users/my/stats?features=projects&start_date=${todayStr()}`, apiKey), 
 	])
 
 	const d = stats.data || {}
