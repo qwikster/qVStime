@@ -57,19 +57,19 @@ function formatSeconds(s) {
 }
 
 async function fetchData(apiUrl, apiKey, origin) {
-	const [language, projects, today] = await Promise.all([
+	const [lang, proj, today] = await Promise.all([
 		get(`${origin}/api/v1/users/my/stats`, apiKey), // Languages
 		get(`${origin}/api/v1/users/my/stats?features=projects`, apiKey), // Projects
 		get(`${origin}/api/v1/users/my/stats?features=projects&start_date=${todayStr()}`, apiKey), 
 	])
 
-	const d = stats.data || {}
 	return {
-		today:        formatSeconds(todayHours.total_seconds),
-		total:        d.human_readable_total || formatSeconds(d.total_seconds),
-		dailyAverage: d.human_readable_daily_average || formatSeconds(d.daily_average),
-		projects:     (d.projects || []).slice(0, 5).map(p => ({ name: p.name, time: p.text || formatSeconds(p.total_seconds), pct: p.percent })),
-		languages:    (d.laguages || []).slice(0, 5).map(l => ({ name: l.name, time: l.text || formatSeconds(l.total_seconds), pct: l.percent })),
+		username:   today.data.username,
+		proj_today: today.data.projects,
+		time_today: today.data.human_readable_total,
+		time_all:   lang.data.human_readable_total,
+		languages:  lang.data.languages,
+		projects:   proj.data.projects,
 	}
 }
 
