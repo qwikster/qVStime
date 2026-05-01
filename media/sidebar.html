@@ -3,6 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <style>
+        body {
+            font-family: var(--vscode-font-family);
+            font-size: var(--vscode-font-size);
+            color: var(--vscode-foreground);
+            padding: 10px 12px;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .username {
+            font-size: 0.75em;
+            opacity: 0.6;
+        }
+
+        .refresh {
+            background: none;
+            border: none;
+            color: var(--vscode-foreground);
+            opacity: 0.35;
+            cursor: pointer;
+            font-size: 1em;
+            padding: 0;
+            line-height: 1;
+            transition: all 0.2s ease;
+        }
+        .refresh:hover { opacity: 1; }
+
+        .summary {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .box {
+            flex: 1;
+            background: var(--vscode-editor-inactiveSelectionBackground);
+            border-radius: 3px;
+            padding: 5px 8px;
+        }
+
+        .box-label {
+            text-align: center;
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            opacity: 0.5;
+            padding-bottom: 5px;
+        }
+
+        .box-value {
+            font-size: 0.8em;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .section {margin-bottom: 10px;}
+        .section-title {
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            opacity: 0.45;
+            margin-bottom: 4px;
+        }
+
+        .item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .item-name {
+            flex-shrink: 0;
+            font-size: 0.8em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            opacity: 0.9;
+        }
+        .item-time {
+            font-size: 0.75em;
+            opacity: 0.6;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
     </style>
 </head>
 <body>
@@ -15,7 +106,8 @@
             .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
         }
 
-        function items(arr, useColor) {
+        function items(array, useColor) {
+            arr = array.filter(item => item.total_seconds >= 600)
             if (!arr || !arr.length) return '<span class="muted">No data</span>';
             return arr.map(item => {
                 const fill = useColor && item.useColor
@@ -33,33 +125,33 @@
             document.getElementById("root").innerHTML = `
                 <div class="header">
                     <span class="username">${esc(d.username)}</span>
-                    <button class="refresh-btn" id="refresh" title="Refresh">↻</button>
+                    <button class="refresh" id="refresh" title="Refresh">↻</button>
                 </div>
 
                 <div class="summary">
                     <div class="box">
-                        <div class="box-label">Today</div>
-                        <div class="box-value">${esc(d.time_today)}</div>    
+                        <div class="box-label">TODAY</div>
+                        <div class="box-value">${esc(d.time_today ?? "no time")}</div>    
                     </div>
                     <div class="box">
-                        <div class="box-label">All time</div>
-                        <div class="box-value">${esc(d.time_all)}</div>    
+                        <div class="box-label">ALLTIME</div>
+                        <div class="box-value">${esc(d.time_all ?? "no time")}</div>    
                     </div>
                 </div>
 
                 <div class="section">
                     <div class="section-title">Projects: Today</div>
-                    ${items(d.proj_today, false)}
+                    ${items(d.proj_today.slice(0, 16), false)}
                 </div>
 
                 <div class="section">
                     <div class="section-title">Projects: All Time</div>
-                    ${items(d.projects, false)}
+                    ${items(d.projects.slice(0, 16), false)}
                 </div>
 
                 <div class="section">
                     <div class="section-title">Languages: All Time</div>
-                    ${items(d.languages, true)}
+                    ${items(d.languages.slice(0, 16), true)}
                 </div>
             `
 
