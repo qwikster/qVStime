@@ -7,7 +7,24 @@ const path = require("path")
 const https = require("https")
 
 function readConfig() {
-	
+	const raw = fs.readFileSync(path.join(os.homedir(), ".wakatime.cfg"), "utf8")
+	const cfg = {}
+	let section = null
+	for (const line of raw.split("\n")) {
+		const t = line.trim()
+		const sec = t.match(/^\[(.+)\]$/)
+		if (sec) { section = sec[1]; cfg[section] = {}; continue; }
+		if (section && t.includes("=")) {
+			const [k, ...rest] = t.split("=")
+			cfg[section][k.trim()] = rest.join("=").trim()
+		}
+	}
+
+	const settings = cfg.settings || {};
+	const apiUrl = (settings.api_url || 'https://hackatime.hackclub.com/api/hackatime/v1').replace(/\/$/, '')
+	const apiKey = settings.api_key || ""
+	const origin = new URL(apiUrl).origin
+	console.log({ apiUrl, apiKey, origin })
 	return { apiUrl, apiKey, origin }
 }
 
