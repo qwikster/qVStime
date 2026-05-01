@@ -15,6 +15,66 @@
             .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
         }
 
+        function items(arr, useColor) {
+            if (!arr || !arr.length) return '<span class="muted">No data</span>';
+            return arr.map(item => {
+                const fill = useColor && item.useColor
+                ? `style="width:${item.percent}%;background:${esc(item.color)}"`
+                : `style="width:${item.percent}%"`
+                return `<div class="item">
+                            <span class="item-name" title="${esc(item.name)}">${esc(item.name)}</span>
+                            <div class="bar-track"><div class="bar-fill" ${fill}></div></div>
+                            <span class="item-time">${esc(item.text)}</span>   
+                        </div>`;
+            }).join("");
+        }
+
+        function render(d) {
+            document.getElementById("root").innerHTML = `
+                <div class="header">
+                    <span class="username">${esc(d.username)}</span>
+                    <button class="refresh-btn" id="refresh" title="Refresh">↻</button>
+                </div>
+
+                <div class="summary">
+                    <div class="box">
+                        <div class="box-label">Today</div>
+                        <div class="box-value">${esc(d.time_today)}</div>    
+                    </div>
+                    <div class="box">
+                        <div class="box-label">All time</div>
+                        <div class="box-value">${esc(d.time_all)}</div>    
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Projects: Today</div>
+                    ${items(d.proj_today, false)}
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Projects: All Time</div>
+                    ${items(d.projects, false)}
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Languages: All Time</div>
+                    ${items(d.languages, true)}
+                </div>
+            `
+
+            document.getElementById("refresh").addEventListener("click", () => {
+                vscode.postMessage({ command: "refresh" })
+            })
+        }
+
+        window.addEventListener("message", (e) => {
+            const { command, data, message } = e.data
+            if (command === "data") render(data)
+            else if (command === "error")
+                document.getElementById("root").innerHTML = `<span class="error">${esc(message)}</span`
+        })
+
         vscode.postMessage({ command: "ready" })
     </script>
 </body>
